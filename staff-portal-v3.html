@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - User Management</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background-color: #F2F2F2; color: #1a1a1a; }
+
+        /* Navbar */
+        .navbar { background: #6DFFD4; height: 75px; display: flex; align-items: center; padding: 0 1.5rem; position: sticky; top: 0; z-index: 100; }
+        .logo { font-size: 1.4rem; font-weight: 800; text-decoration: none; color: #1a1a1a; }
+        .logo span { color: #8A2BE2; }
+
+        .container { padding: 1.5rem; max-width: 800px; margin: 0 auto; }
+
+        /* Search Bar */
+        .search-box { background: white; padding: 10px 20px; border-radius: 30px; display: flex; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 2rem; }
+        .search-box input { border: none; outline: none; padding: 10px; width: 100%; font-family: 'Poppins'; font-weight: 600; }
+        .search-box i { color: #8A2BE2; }
+
+        /* Section Titles */
+        h2 { font-weight: 800; margin-bottom: 1rem; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
+
+        /* User & Transaction Cards */
+        .card { background: white; border-radius: 25px; padding: 1.2rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.02); }
+        .card-info h4 { font-size: 0.9rem; font-weight: 700; color: #333; }
+        .card-info p { font-size: 0.75rem; color: #777; font-weight: 600; }
+        
+        .status-badge { padding: 5px 12px; border-radius: 15px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; }
+        .pending { background: #FFF9E6; color: #D4A017; }
+        .completed { background: #E6FFF2; color: #27AE60; }
+
+        /* Action Sheet (Bottom Drawer for Mobile) */
+        .drawer { position: fixed; bottom: -100%; left: 0; width: 100%; background: white; border-top-left-radius: 30px; border-top-right-radius: 30px; padding: 2rem 1.5rem; z-index: 1000; transition: 0.4s ease; box-shadow: 0 -10px 40px rgba(0,0,0,0.1); }
+        .drawer.active { bottom: 0; }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; z-index: 900; }
+        .overlay.active { display: block; }
+
+        .action-btn { width: 100%; padding: 1.2rem; border-radius: 20px; border: none; font-weight: 800; font-family: 'Poppins'; cursor: pointer; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-approve { background: #1a1a1a; color: white; }
+        .btn-view { background: #F0EDFF; color: #8A2BE2; }
+        .btn-cancel { background: #F2F2F2; color: #666; }
+
+        #receipt-preview { width: 100%; border-radius: 20px; margin-bottom: 1rem; display: none; }
+    </style>
+</head>
+<body>
+
+<header class="navbar">
+    <a href="#" class="logo">Admin<span>Portal</span></a>
+</header>
+
+<div class="container">
+    <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" id="user-search" placeholder="Search user by email..." onkeyup="searchUsers()">
+    </div>
+
+    <div id="pending-section">
+        <h2><i class="fas fa-clock"></i> Pending Deposits</h2>
+        <div id="pending-list">
+            </div>
+    </div>
+
+    <div id="user-section" style="margin-top: 2rem;">
+        <h2><i class="fas fa-users"></i> All Users</h2>
+        <div id="user-list">
+            </div>
+    </div>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<div class="drawer" id="drawer">
+    <h3 id="drawer-title" style="margin-bottom: 1.5rem; font-weight: 800;">Manage Transaction</h3>
+    
+    <img id="receipt-preview" src="" alt="Proof of Payment">
+    
+    <div id="deposit-actions">
+        <button class="action-btn btn-view" id="view-receipt-btn">View Receipt</button>
+        <button class="action-btn btn-approve" onclick="approveDeposit()">Approve & Add Balance</button>
+    </div>
+
+    <div id="user-actions" style="display:none;">
+        <p style="font-size: 0.8rem; font-weight: 700; color: #777; margin-bottom: 10px;">ADJUST BALANCE</p>
+        <input type="number" id="manual-amount" class="card" style="width:100%; border: 2px solid #F0EDFF;" placeholder="Enter Amount ($)">
+        <div style="display:flex; gap:10px;">
+            <button class="action-btn btn-approve" onclick="adjustBalance('add')">Add</button>
+            <button class="action-btn btn-cancel" style="background:#FFE6E6; color:#FF4D4D;" onclick="adjustBalance('subtract')">Deduct</button>
+        </div>
+    </div>
+
+    <button class="action-btn btn-cancel" onclick="closeDrawer()" style="margin-top: 10px;">Close</button>
+</div>
+
+<script>
+    const _supabase = supabase.createClient('https://iuuokazjfwlziilwwynr.supabase.co', 'YOUR_ANON_KEY');
+
+    let currentSelection = {}; // Stores the user or transaction being managed
+
+    // Initial Security Check
+    async function checkAdmin() {
+        const { data: { user } } = await _supabase.auth.getUser();
+        if (!user) window.location.href = 'index.html';
+        
+        let { data: profile } = await _supabase.from('profiles').select('is_admin').eq('id', user.id).single();
+        if (!profile.is_admin) {
+            alert("Access Denied");
+            window.location.href = 'dashboard.html';
+        }
+        loadData();
+    }
+
+    async function loadData() {
+        // Load Pending Deposits
+        const { data: deposits } = await _supabase.from('transactions')
+            .select(`*, profiles(email)`)
+            .eq('status', 'pending').eq('type', 'deposit');
+        
+        const list = document.getElementById('pending-list');
+        list.innerHTML = deposits.length ? '' : '<p style="font-size:0.8rem; color:#999;">No pending deposits.</p>';
+        
+        deposits.forEach(d => {
+            list.innerHTML += `
+                <div class="card" onclick="openDepositDrawer('${d.id}', '${d.amount}', '${d.proof_url}', '${d.user_id}')">
+                    <div class="card-info">
+                        <h4>${d.profiles.email}</h4>
+                        <p>$${d.amount} • ${d.asset}</p>
+                    </div>
+                    <span class="status-badge pending">Pending</span>
+                </div>
+            `;
+        });
+    }
+
+    // --- DRAWER LOGIC ---
+    function openDepositDrawer(id, amt, img, uid) {
+        currentSelection = { id, amt, img, uid };
+        document.getElementById('drawer-title').innerText = "Approve Deposit";
+        document.getElementById('deposit-actions').style.display = 'block';
+        document.getElementById('user-actions').style.display = 'none';
+        document.getElementById('receipt-preview').src = `https://iuuokazjfwlziilwwynr.supabase.co/storage/v1/object/public/receipts/${img}`;
+        document.getElementById('receipt-preview').style.display = 'none';
+        
+        document.getElementById('view-receipt-btn').onclick = () => {
+            document.getElementById('receipt-preview').style.display = 'block';
+        };
+
+        toggleDrawer(true);
+    }
+
+    async function approveDeposit() {
+        const { id, amt, uid } = currentSelection;
+        
+        // 1. Update Transaction
+        await _supabase.from('transactions').update({ status: 'completed' }).eq('id', id);
+        
+        // 2. Increment User Balance
+        const { data: profile } = await _supabase.from('profiles').select('balance').eq('id', uid).single();
+        const newBalance = parseFloat(profile.balance || 0) + parseFloat(amt);
+        
+        await _supabase.from('profiles').update({ balance: newBalance }).eq('id', uid);
+        
+        alert("Approved!");
+        closeDrawer();
+        loadData();
+    }
+
+    function toggleDrawer(show) {
+        document.getElementById('drawer').classList.toggle('active', show);
+        document.getElementById('overlay').classList.toggle('active', show);
+    }
+
+    function closeDrawer() { toggleDrawer(false); }
+
+    checkAdmin();
+</script>
+</body>
+</html>

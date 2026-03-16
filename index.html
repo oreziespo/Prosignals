@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ProSignals</title>
+    <link rel="stylesheet" href="main.css" />
+  </head>
+  <body>
+    <div class="navbar">
+      <div class="container">
+        <a class="logo" href="index.html">Pro<span>Signals</span></a>
+
+        <img
+          id="mobile-cta"
+          class="mobile-menu"
+          src="images/menu.svg"
+          alt="Open Navigation"
+        />
+
+        <nav>
+          <img
+            id="mobile-exit"
+            class="mobile-menu-exit"
+            src="images/exit.svg"
+            alt="Close Navigation"
+          />
+
+          <ul class="primary-nav">
+            <li class="current"><a href="#">Home</a></li>
+            <li><a href="faq.html">FAQs</a></li>
+            <li><a href="#">Pricing</a></li>
+          </ul>
+
+          <ul class="secondary-nav">
+            <li><a href="#">Contact</a></li>
+            <li class="go-premium-cta">
+              <a href="signup.html">Signup/Login</a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="container">
+        <div class="left-col">
+          <p class="subhead">Your Gateway To Smarter Trading</p>
+          <p class="hero-info">
+            Join thousands of traders using advanced analytics, real-time data,
+            powerful tools and signals to make better trading decisions. Buy,
+            sell and manage assets with a fast, secure and user-friendly trading
+            platform built for beginners and professionals.
+          </p>
+
+          <div class="hero-cta">
+            <a href="signup.html" class="primary-cta">Get Started</a>
+            <a href="#" class="view-markets">View Markets</a>
+          </div>
+        </div>
+
+        <img
+          src="images/illustration.svg"
+          class="hero-img"
+          alt="Illustration"
+        />
+      </div>
+    </section>
+
+    <section class="features-section">
+      <div class="container">
+        <ul class="features-list">
+          <li>Crypto Deposits &amp; Withdrawals</li>
+          <li>Real-Time Market Data</li>
+          <li>professional Trading Tools</li>
+          <li>Highly Accurate Signals</li>
+          <li>Fast Trade Execution</li>
+          <li>Fast Transactions</li>
+        </ul>
+
+        <img src="images/holding-phone.jpg" alt="Man holding phone" />
+      </div>
+    </section>
+
+    <section class="testimonials-section">
+      <div class="container">
+        <ul>
+          <li>
+            <img src="images/person.jpg" alt="Person" />
+
+            <blockquote>
+              "This platform makes trading simple and fast."
+            </blockquote>
+            <cite>- Jane Doe</cite>
+          </li>
+          <li>
+            <img src="images/person.jpg" alt="Person" />
+
+            <blockquote>
+              "The crypto withdrawals are quick and reliable."
+            </blockquote>
+            <cite>- Jane Doe</cite>
+          </li>
+          <li>
+            <img src="images/person.jpg" alt="Person" />
+
+            <blockquote>
+              "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam
+              nonumy eirmod tempor invidunt ut labore et dolore"
+            </blockquote>
+            <cite>- Jane Doe</cite>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="securities">
+      <div class="container">
+        <h3 class="sec">Your Security is our Priority</h3>
+        <ul class="features-list">
+          <li>Encrypted user data</li>
+          <li>Secure crypto wallet system</li>
+          <li>Secured Transactions</li>
+        </ul>
+      </div>
+    </section>
+
+
+    <script>
+      const mobileBtn = document.getElementById("mobile-cta");
+      nav = document.querySelector("nav");
+      mobileBtnExit = document.getElementById("mobile-exit");
+
+      mobileBtn.addEventListener("click", () => {
+        nav.classList.add("menu-btn");
+      });
+
+      mobileBtnExit.addEventListener("click", () => {
+        nav.classList.remove("menu-btn");
+      });
+    </script>
+  </body>
+</html>

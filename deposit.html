@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProSignals - Deposit</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background-color: #F8F9FD; color: #1a1a1a; }
+
+        /* Navbar */
+        .navbar { width: 100%; background: #6DFFD4; height: 75px; display: flex; align-items: center; position: fixed; top: 0; z-index: 1000; padding: 0 1.5rem; }
+        .logo { font-size: 1.6rem; font-weight: 800; color: #1a1a1a; text-decoration: none; }
+        .logo span { color: #8A2BE2; }
+        .menu-toggle { margin-left: auto; font-size: 1.5rem; cursor: pointer; }
+
+        .page-content { padding-top: 100px; display: flex; justify-content: center; padding-bottom: 40px; }
+        
+        .deposit-card { background: white; width: 92%; max-width: 450px; padding: 2.5rem 1.5rem; border-radius: 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.04); text-align: center; }
+        
+        h2 { font-weight: 800; font-size: 1.8rem; margin-bottom: 1.5rem; }
+
+        /* Selectors */
+        select, .custom-input { width: 100%; padding: 1.2rem; border-radius: 20px; border: 2px solid #F0F0F0; background: #FDFDFF; font-family: 'Poppins'; font-weight: 600; outline: none; transition: 0.3s; margin-bottom: 1rem; }
+        select:focus, .custom-input:focus { border-color: #8A2BE2; background: #fff; }
+
+        /* Wallet Section */
+        #address-section { display: none; margin-bottom: 2rem; animation: fadeIn 0.5s ease; }
+        .qr-frame { width: 140px; height: 140px; background: white; border: 2px solid #F0F0F0; margin: 0 auto 1.2rem; border-radius: 25px; display: flex; align-items: center; justify-content: center; padding: 10px; }
+        .qr-frame img { width: 100%; height: 100%; object-fit: contain; }
+
+        .address-container { background: #F0EDFF; padding: 15px; border-radius: 20px; position: relative; display: flex; align-items: center; justify-content: space-between; }
+        .address-text { font-size: 0.75rem; font-weight: 700; color: #8A2BE2; word-break: break-all; text-align: left; max-width: 80%; }
+        
+        .copy-trigger { color: #8A2BE2; cursor: pointer; font-size: 1.2rem; transition: 0.2s; position: relative; }
+        .copy-tooltip { position: absolute; top: -30px; right: 0; background: #1a1a1a; color: white; font-size: 0.6rem; padding: 4px 8px; border-radius: 5px; opacity: 0; transition: 0.3s; pointer-events: none; }
+
+        /* Sleek Upload Button */
+        .file-upload-wrapper { position: relative; margin-top: 0.5rem; }
+        .file-upload-label { 
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            width: 100%; padding: 1.2rem; background: #F0F0F0; border: 2px dashed #CCC; 
+            border-radius: 20px; cursor: pointer; font-weight: 700; color: #666; transition: 0.3s;
+        }
+        .file-upload-label:hover { background: #E8E8E8; border-color: #8A2BE2; color: #8A2BE2; }
+        #proof-img { position: absolute; opacity: 0; width: 1px; height: 1px; }
+
+        .btn-submit { width: 100%; padding: 1.3rem; background: #1a1a1a; color: white; border-radius: 25px; border: none; font-weight: 800; font-size: 1.1rem; cursor: pointer; margin-top: 1.5rem; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .min-notice { font-size: 0.7rem; color: #999; font-weight: 600; display: block; margin-top: 8px; text-align: center; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Sidebar Styles */
+        .side-menu { position: fixed; top: 0; right: -100%; height: 100vh; width: 280px; background: white; z-index: 2000; transition: 0.4s ease; padding: 2rem; box-shadow: -10px 0 30px rgba(0,0,0,0.05); }
+        .side-menu.active { right: 0; }
+        .menu-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 1500; display: none; }
+        .menu-overlay.active { display: block; }
+        .nav-links { list-style: none; margin-top: 2rem; }
+        .nav-links li { margin-bottom: 1.5rem; }
+        .nav-links a { text-decoration: none; color: #1a1a1a; font-weight: 700; display: flex; align-items: center; gap: 12px; }
+    </style>
+</head>
+<body>
+
+    <div class="menu-overlay" id="overlay"></div>
+    <header class="navbar">
+        <div style="width:100%; max-width:1200px; margin:0 auto; display:flex; align-items:center;">
+            <a class="logo" href="dashboard.html">Pro<span>Signals</span></a>
+            <div class="menu-toggle" id="open-menu"><i class="fas fa-bars"></i></div>
+        </div>
+    </header>
+
+    <div class="side-menu" id="side-menu">
+        <i class="fas fa-times" id="close-menu" style="font-size: 1.5rem; cursor: pointer; float: right;"></i>
+        <ul class="nav-links">
+            <li><a href="dashboard.html"><i class="fas fa-th-large" style="color:#8A2BE2;"></i> Dashboard</a></li>
+            <li><a href="profile.html"><i class="fas fa-user-circle" style="color:#8A2BE2;"></i> My Profile</a></li>
+            <li><a href="deposit.html"><i class="fas fa-wallet" style="color:#8A2BE2;"></i> Deposit</a></li>
+            <li><a href="withdraw.html"><i class="fas fa-money-bill-transfer" style="color:#8A2BE2;"></i> Withdraw</a></li>
+            <li><a href="transactions.html"><i class="fas fa-history" style="color:#8A2BE2;"></i> Transactions</a></li>
+            <li><a href="#" id="logout-btn" style="color: #FF4D4D; margin-top: 2rem;"><i class="fas fa-sign-out-alt"></i> Log Out</a></li>
+        </ul>
+    </div>
+
+    <main class="page-content">
+        <div class="deposit-card">
+            <h2>Deposit</h2>
+
+            <select id="asset-select" onchange="showWallet()">
+                <option value="">Select Coin</option>
+                <option value="BTC">Bitcoin (BTC)</option>
+                <option value="USDT">USDT (TRC20)</option>
+            </select>
+
+            <div id="address-section">
+                <div class="qr-frame">
+                    <img id="qr-img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" alt="QR Code">
+                </div>
+                <p style="font-size: 0.7rem; font-weight: 800; color: #999; margin-bottom: 8px;">NETWORK: <span id="network-name" style="color:#8A2BE2">...</span></p>
+                
+                <div class="address-container">
+                    <span class="address-text" id="wallet-addr">---</span>
+                    <div class="copy-trigger" onclick="copyAddress()">
+                        <span class="copy-tooltip" id="tooltip">Copied!</span>
+                        <i class="far fa-copy" id="copy-icon"></i>
+                    </div>
+                </div>
+            </div>
+
+            <form id="deposit-form" style="text-align: left;">
+                <label style="font-size: 0.75rem; font-weight: 800; color: #888; margin-left: 10px;">AMOUNT (USD)</label>
+                <input type="number" id="amount" class="custom-input" placeholder="Min. 10.00" required min="10">
+
+                <label style="font-size: 0.75rem; font-weight: 800; color: #888; margin-left: 10px; margin-top: 10px; display: block;">PROOF OF PAYMENT</label>
+                <div class="file-upload-wrapper">
+                    <label for="proof-img" class="file-upload-label" id="file-label">
+                        <i class="fas fa-cloud-upload-alt"></i> <span>Upload Receipt</span>
+                    </label>
+                    <input type="file" id="proof-img" accept="image/*" required onchange="updateFileName()">
+                </div>
+
+                <button type="submit" class="btn-submit" id="submit-btn">Complete Deposit</button>
+                <span class="min-notice">Minimum deposit amount is $10.00</span>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        const _supabase = supabase.createClient('https://iuuokazjfwlziilwwynr.supabase.co', 'sb_publishable_OVw_Wt2N7kMbX05WHpzRpg_fdLqjCFK');
+
+        const coinData = {
+            "BTC": { addr: "bc1qxy2kgdy627qyqja6ayer0jw0p4p39as3chgs89", net: "Bitcoin (Legacy)", qr: "btc_qr.png" },
+            "USDT": { addr: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", net: "TRC20 (Tron Network)", qr: "usdt_qr.png" }
+        };
+
+        function showWallet() {
+            const asset = document.getElementById('asset-select').value;
+            const section = document.getElementById('address-section');
+            if(asset) {
+                section.style.display = 'block';
+                document.getElementById('wallet-addr').innerText = coinData[asset].addr;
+                document.getElementById('network-name').innerText = coinData[asset].net;
+                document.getElementById('qr-img').src = coinData[asset].qr;
+            } else {
+                section.style.display = 'none';
+            }
+        }
+
+        function copyAddress() {
+            const text = document.getElementById('wallet-addr').innerText;
+            const tooltip = document.getElementById('tooltip');
+            const icon = document.getElementById('copy-icon');
+
+            navigator.clipboard.writeText(text);
+            
+            // Visual feedback instead of popup
+            tooltip.style.opacity = '1';
+            icon.classList.replace('fa-copy', 'fa-check-circle');
+            
+            setTimeout(() => {
+                tooltip.style.opacity = '0';
+                icon.classList.replace('fa-check-circle', 'fa-copy');
+            }, 2000);
+        }
+
+        function updateFileName() {
+            const input = document.getElementById('proof-img');
+            const label = document.getElementById('file-label').querySelector('span');
+            if (input.files.length > 0) {
+                label.innerText = input.files[0].name;
+                document.getElementById('file-label').style.borderColor = "#8A2BE2";
+            }
+        }
+
+        document.getElementById('deposit-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submit-btn');
+            btn.innerText = "Processing...";
+            btn.disabled = true;
+
+            try {
+                const { data: { user } } = await _supabase.auth.getUser();
+                const file = document.getElementById('proof-img').files[0];
+                const fileName = `receipt_${Date.now()}_${user.id}.png`;
+
+                await _supabase.storage.from('receipts').upload(fileName, file);
+                await _supabase.from('transactions').insert([{
+                    user_id: user.id,
+                    amount: parseFloat(document.getElementById('amount').value),
+                    asset: document.getElementById('asset-select').value,
+                    type: 'deposit',
+                    status: 'pending',
+                    proof_url: fileName
+                }]);
+
+                window.location.href = 'transactions.html';
+            } catch (err) {
+                alert(err.message);
+                btn.disabled = false;
+                btn.innerText = "Complete Deposit";
+            }
+        };
+
+        // Mobile Menu
+        document.getElementById('open-menu').onclick = () => { document.getElementById('side-menu').classList.add('active'); document.getElementById('overlay').classList.add('active'); };
+        document.getElementById('close-menu').onclick = () => { document.getElementById('side-menu').classList.remove('active'); document.getElementById('overlay').classList.remove('active'); };
+        document.getElementById('overlay').onclick = () => { document.getElementById('side-menu').classList.remove('active'); document.getElementById('overlay').classList.remove('active'); };
+    </script>
+</body>
+</html>

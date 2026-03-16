@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProSignals - Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background-color: #F4F4F4; color: #1a1a1a; }
+
+        /* ── NAVBAR ── */
+        .navbar { 
+            width: 100%; 
+            background: #6DFFD4; 
+            height: 70px; 
+            display: flex;
+            align-items: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            padding: 0 1.5rem;
+        }
+        .navbar .logo { font-size: 1.4rem; font-weight: 800; color: #000; text-decoration: none; }
+        .navbar .logo span { color: #00A3FF; }
+        .menu-toggle { margin-left: auto; font-size: 1.5rem; cursor: pointer; }
+
+        /* ── MOBILE MENU ── */
+        .side-menu { position: fixed; top: 0; right: -100%; height: 100vh; width: 280px; background: white; z-index: 2000; transition: 0.4s ease; padding: 2rem; display: flex; flex-direction: column; box-shadow: -10px 0 30px rgba(0,0,0,0.1); }
+        .side-menu.active { right: 0; }
+        .close-menu { align-self: flex-end; font-size: 1.8rem; cursor: pointer; margin-bottom: 2rem; }
+        .nav-links { list-style: none; }
+        .nav-links li { margin-bottom: 1.5rem; }
+        .nav-links a { text-decoration: none; color: #1a1a1a; font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 12px; }
+        .nav-links a i { color: #8A2BE2; width: 25px; }
+        .menu-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1500; display: none; }
+        .menu-overlay.active { display: block; }
+
+        /* ── PAGE CONTENT ── */
+        .page-content { padding-top: 100px; padding-left: 1rem; padding-right: 1rem; padding-bottom: 2rem; max-width: 600px; margin: 0 auto; }
+
+        /* Header Card */
+        .header-card { 
+            background: #EFEEF7; 
+            border-radius: 40px; 
+            padding: 2.5rem 2rem; 
+            margin-bottom: 1.5rem;
+        }
+        .header-card h1 { font-size: 1.8rem; font-weight: 800; line-height: 1.2; margin-bottom: 1.5rem; }
+        .header-card h1 span { color: #8A2BE2; }
+
+        .balance-label { font-size: 0.75rem; font-weight: 700; color: #777; letter-spacing: 1px; text-transform: uppercase; }
+        .balance-amount { font-size: 3rem; font-weight: 800; margin-bottom: 0.5rem; }
+        
+        .tier-badge { 
+            background: #8A2BE2; 
+            color: white; 
+            padding: 6px 18px; 
+            border-radius: 20px; 
+            font-size: 0.75rem; 
+            font-weight: 700; 
+            display: inline-block;
+            margin-bottom: 2rem;
+        }
+
+        .header-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .btn { 
+            padding: 1.1rem; 
+            border-radius: 18px; 
+            text-align: center; 
+            text-decoration: none; 
+            font-weight: 700; 
+            font-size: 0.9rem;
+        }
+        .btn-white { background: white; color: black; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .btn-dark { background: #1a1a1a; color: white; }
+
+        /* ── ACTION GRID ── */
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .grid-item { 
+            background: white; 
+            border-radius: 24px; 
+            padding: 1.8rem 1rem; 
+            text-align: center; 
+            text-decoration: none; 
+            color: inherit;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            transition: 0.2s;
+        }
+        .grid-item:active { transform: scale(0.96); }
+        .grid-item i { font-size: 1.5rem; color: #8A2BE2; margin-bottom: 12px; display: block; }
+        .grid-item h3 { font-size: 0.9rem; font-weight: 700; }
+    </style>
+</head>
+<body>
+
+    <div class="menu-overlay" id="overlay"></div>
+
+    <header class="navbar">
+        <a class="logo" href="dashboard.html">Pro<span>Signals</span></a>
+        <div class="menu-toggle" id="open-menu"><i class="fas fa-bars"></i></div>
+    </header>
+
+    <div class="side-menu" id="side-menu">
+        <i class="fas fa-times close-menu" id="close-menu"></i>
+        <ul class="nav-links">
+            <li><a href="dashboard.html"><i class="fas fa-th-large"></i> Dashboard</a></li>
+            <li><a href="profile.html"><i class="fas fa-user-circle"></i> My Profile</a></li>
+            <li><a href="deposit.html"><i class="fas fa-wallet"></i> Deposit</a></li>
+            <li><a href="withdraw.html"><i class="fas fa-money-bill-transfer"></i> Withdraw</a></li>
+            <li><a href="transactions.html"><i class="fas fa-history"></i> Transactions</a></li>
+            <li><a href="mailto:support@prosignals.com"><i class="fas fa-envelope"></i> Email Us</a></li>
+            <li><a href="#" id="logout-btn" style="color:#ff6b6b;"><i class="fas fa-sign-out-alt"></i> Log Out</a></li>
+        </ul>
+    </div>
+
+    <main class="page-content">
+        <div class="header-card">
+            <h1>Welcome back, <br><span id="user-name">Member</span>!</h1>
+            
+            <p class="balance-label">Total Balance</p>
+            <h2 class="balance-amount" id="total-balance">$0.00</h2>
+            <div class="tier-badge" id="user-tier">Basic Account</div>
+
+            <div class="header-btns">
+                <a href="withdraw.html" class="btn btn-white">Withdraw</a>
+                <a href="deposit.html" class="btn btn-dark">Deposit</a>
+            </div>
+        </div>
+
+        <div class="action-grid">
+            <a href="copy-experts.html" class="grid-item">
+                <i class="fas fa-users-gear"></i>
+                <h3>Copy Experts</h3>
+            </a>
+            <a href="buy-crypto.html" class="grid-item">
+                <i class="fab fa-bitcoin"></i>
+                <h3>Buy Crypto</h3>
+            </a>
+            <a href="upgrade.html" class="grid-item">
+                <i class="fas fa-arrow-up-right-dots"></i>
+                <h3>Upgrade</h3>
+            </a>
+            <a href="transactions.html" class="grid-item">
+                <i class="fas fa-file-invoice"></i>
+                <h3>History</h3>
+            </a>
+            <a href="portfolio.html" class="grid-item">
+                <i class="fas fa-chart-pie"></i>
+                <h3>Portfolio</h3>
+            </a>
+            <a href="mailto:support@prosignals.com" class="grid-item">
+                <i class="fas fa-headset"></i>
+                <h3>Support</h3>
+            </a>
+        </div>
+    </main>
+
+    <script>
+        const _supabase = supabase.createClient(
+            'https://iuuokazjfwlziilwwynr.supabase.co', 
+            'sb_publishable_OVw_Wt2N7kMbX05WHpzRpg_fdLqjCFK'
+        );
+
+        // MENU LOGIC
+        const toggleMenu = (show) => {
+            document.getElementById('side-menu').classList.toggle('active', show);
+            document.getElementById('overlay').classList.toggle('active', show);
+        };
+        document.getElementById('open-menu').onclick = () => toggleMenu(true);
+        document.getElementById('close-menu').onclick = () => toggleMenu(false);
+        document.getElementById('overlay').onclick = () => toggleMenu(false);
+
+        // LOAD PROFILE & GREETING
+        async function loadProfile() {
+            const { data: { user }, error: userError } = await _supabase.auth.getUser();
+            
+            if (userError || !user) { 
+                window.location.href = 'index.html'; 
+                return; 
+            }
+
+            // Set greeting from Auth Metadata first for speed
+            const metadataName = user.user_metadata?.full_name;
+            if (metadataName) {
+                document.getElementById('user-name').innerText = metadataName.split(' ')[0];
+            }
+
+            // Fetch Financial/Tier data
+            const { data: profile } = await _supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', user.id)
+                .single();
+
+            if (profile) {
+                document.getElementById('total-balance').innerText = `$${profile.balance?.toLocaleString() || '0.00'}`;
+                document.getElementById('user-tier').innerText = `${profile.account_tier || 'Basic'} Account`;
+                
+                // Final name check from profile table
+                if (profile.full_name) {
+                    document.getElementById('user-name').innerText = profile.full_name.split(' ')[0];
+                }
+            }
+        }
+
+        // LOGOUT
+        document.getElementById('logout-btn').onclick = async (e) => {
+            e.preventDefault();
+            await _supabase.auth.signOut();
+            window.location.href = "index.html";
+        };
+
+        loadProfile();
+    </script>
+</body>
+</html>

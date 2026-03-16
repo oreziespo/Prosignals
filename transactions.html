@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProSignals - Transactions</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background-color: #F2F2F2; color: #333; overflow-x: hidden; }
+
+        /* ── THE UNIFIED NAVBAR ── */
+        .navbar { 
+            width: 100%; 
+            background: aquamarine; 
+            padding: 1.2rem 0; 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            z-index: 1000; 
+            height: 75px; 
+            display: flex;
+            align-items: center;
+        }
+        .navbar .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            padding: 0 1.5rem; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            width: 100%;
+        }
+        .logo { font-size: 1.6rem; font-weight: 800; color: #1a1a1a; text-decoration: none; }
+        .logo span { color: blueviolet; }
+        .menu-toggle { font-size: 1.5rem; cursor: pointer; color: #1a1a1a; }
+
+        /* Side Menu */
+        .side-menu { position: fixed; top: 0; right: -100%; height: 100vh; width: 280px; background: white; z-index: 2000; transition: 0.4s ease; padding: 2rem; display: flex; flex-direction: column; box-shadow: -10px 0 30px rgba(0,0,0,0.1); }
+        .side-menu.active { right: 0; }
+        .close-menu { align-self: flex-end; font-size: 1.8rem; cursor: pointer; margin-bottom: 2rem; }
+        
+        .nav-links { list-style: none; }
+        .nav-links li { margin-bottom: 1.5rem; }
+        .nav-links a { text-decoration: none; color: #1a1a1a; font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 12px; }
+        .nav-links a i { color: blueviolet; width: 25px; }
+        
+        .menu-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1500; display: none; }
+        .menu-overlay.active { display: block; }
+
+        /* ── PAGE CONTENT (WITH TOP BUFFER) ── */
+        .page-content { 
+            padding-top: 120px; 
+            max-width: 600px; 
+            margin: 0 auto; 
+            padding-left: 1.2rem; 
+            padding-right: 1.2rem;
+        }
+
+        h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 1.5rem; color: #1a1a1a; text-align: center; }
+
+        .transaction-list { display: flex; flex-direction: column; gap: 15px; }
+
+        .txn-card { 
+            background: white; 
+            padding: 1.5rem; 
+            border-radius: 25px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+        }
+
+        .txn-left { display: flex; align-items: center; gap: 15px; }
+        .txn-icon { 
+            width: 50px; 
+            height: 50px; 
+            border-radius: 15px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 1.3rem;
+        }
+        .icon-deposit { background: #e6fffa; color: #38b2ac; }
+        .icon-withdrawal { background: #fff5f5; color: #e53e3e; }
+
+        .txn-details h4 { font-size: 1rem; font-weight: 700; color: #333; }
+        .txn-details p { font-size: 0.8rem; color: #999; margin-top: 2px; }
+
+        .txn-right { text-align: right; }
+        .txn-amount { font-weight: 800; font-size: 1.1rem; margin-bottom: 5px; display: block; }
+        
+        /* Status Badge Styling */
+        .status-badge { 
+            font-size: 0.65rem; 
+            font-weight: 800; 
+            text-transform: uppercase; 
+            padding: 5px 12px; 
+            border-radius: 50px; 
+            letter-spacing: 0.5px;
+        }
+        .status-pending { background: #fff9db; color: #f08c00; }
+        .status-completed { background: #ebfbee; color: #2f9e44; }
+        .status-failed { background: #fff5f5; color: #e03131; }
+
+        #empty-state { text-align: center; padding: 4rem 2rem; color: #bbb; display: none; }
+        #empty-state i { font-size: 3rem; margin-bottom: 1rem; opacity: 0.3; }
+    </style>
+</head>
+<body>
+
+    <div class="menu-overlay" id="overlay"></div>
+
+    <header class="navbar">
+        <div class="container">
+            <a class="logo" href="dashboard.html">Pro<span>Signals</span></a>
+            <div class="menu-toggle" id="open-menu"><i class="fas fa-bars"></i></div>
+        </div>
+    </header>
+
+    <div class="side-menu" id="side-menu">
+        <i class="fas fa-times close-menu" id="close-menu"></i>
+        <ul class="nav-links">
+            <li><a href="dashboard.html"><i class="fas fa-th-large"></i> Dashboard</a></li>
+            <li><a href="profile.html"><i class="fas fa-user-circle"></i> My Profile</a></li>
+            <li><a href="deposit.html"><i class="fas fa-wallet"></i> Deposit</a></li>
+            <li><a href="withdraw.html"><i class="fas fa-money-bill-transfer"></i> Withdraw</a></li>
+            <li><a href="transactions.html"><i class="fas fa-history"></i> Transactions</a></li>
+            <li><a href="mailto:support@prosignals.com"><i class="fas fa-envelope"></i> Email Us</a></li>
+            <li><a href="#" id="logout-btn" style="color:#ff6b6b;"><i class="fas fa-sign-out-alt"></i> Log Out</a></li>
+        </ul>
+    </div>
+
+    <main class="page-content">
+        <h1>Transactions</h1>
+        
+        <div id="empty-state">
+            <i class="fas fa-folder-open"></i>
+            <p>No activity found yet.</p>
+        </div>
+
+        <div class="transaction-list" id="txn-container">
+            </div>
+    </main>
+
+    <script>
+        const _supabase = supabase.createClient('https://iuuokazjfwlziilwwynr.supabase.co', 'sb_publishable_OVw_Wt2N7kMbX05WHpzRpg_fdLqjCFK');
+
+        // Sidebar Controls
+        const toggleMenu = (show) => {
+            document.getElementById('side-menu').classList.toggle('active', show);
+            document.getElementById('overlay').classList.toggle('active', show);
+        };
+        document.getElementById('open-menu').onclick = () => toggleMenu(true);
+        document.getElementById('close-menu').onclick = () => toggleMenu(false);
+        document.getElementById('overlay').onclick = () => toggleMenu(false);
+
+        // Fetch Transactions
+        async function fetchTxns() {
+            const { data: { user } } = await _supabase.auth.getUser();
+            if (!user) { window.location.href = 'index.html'; return; }
+
+            const { data: txns, error } = await _supabase
+                .from('transactions')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false });
+
+            const container = document.getElementById('txn-container');
+            const emptyState = document.getElementById('empty-state');
+
+            if (txns && txns.length > 0) {
+                container.innerHTML = '';
+                txns.forEach(t => {
+                    const isDeposit = t.type === 'deposit';
+                    const date = new Date(t.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    
+                    const card = `
+                        <div class="txn-card">
+                            <div class="txn-left">
+                                <div class="txn-icon ${isDeposit ? 'icon-deposit' : 'icon-withdrawal'}">
+                                    <i class="fas ${isDeposit ? 'fa-arrow-down' : 'fa-arrow-up'}"></i>
+                                </div>
+                                <div class="txn-details">
+                                    <h4>${isDeposit ? 'Deposit' : 'Withdrawal'}</h4>
+                                    <p>${t.asset} • ${date}</p>
+                                </div>
+                            </div>
+                            <div class="txn-right">
+                                <span class="txn-amount" style="color: ${isDeposit ? '#38b2ac' : '#333'}">
+                                    ${isDeposit ? '+' : '-'}$${t.amount.toLocaleString()}
+                                </span>
+                                <span class="status-badge status-${t.status.toLowerCase()}">${t.status}</span>
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += card;
+                });
+            } else {
+                emptyState.style.display = 'block';
+            }
+        }
+
+        document.getElementById('logout-btn').onclick = async (e) => {
+            e.preventDefault();
+            await _supabase.auth.signOut();
+            window.location.href = "index.html";
+        };
+
+        fetchTxns();
+        
+        // Listen for real-time updates
+const channel = _supabase
+  .channel('public:transactions')
+  .on('postgres_changes', { 
+      event: 'UPDATE', 
+      schema: 'public', 
+      table: 'transactions' 
+  }, (payload) => {
+      console.log('Change received!', payload);
+      fetchTxns(); // This re-runs your list function automatically
+  })
+  .subscribe();
+  
+    </script>
+</body>
+</html>

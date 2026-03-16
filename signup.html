@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProSignals - Access Portal</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #F4F4F4;
+            color: #1a1a1a;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            width: 100%;
+            background: #6DFFD4;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            z-index: 1000;
+            padding: 0 1.5rem;
+        }
+
+        .logo { font-size: 1.4rem; font-weight: 800; color: #000; text-decoration: none; }
+        .logo span { color: #00A3FF; }
+        .menu-toggle { font-size: 1.5rem; cursor: pointer; }
+
+        main {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 100px 1.2rem 3rem;
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 480px;
+            background: white;
+            border-radius: 40px;
+            padding: 2.5rem;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+        }
+
+        .form-toggle {
+            display: flex;
+            background: #F0F0F0;
+            padding: 6px;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            color: #777;
+            font-weight: 700;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: .3s;
+        }
+
+        .toggle-btn.active { background: white; color: #8A2BE2; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+
+        .form { display: none; flex-direction: column; gap: 1.2rem; }
+        .form.active { display: flex; animation: fadeIn .4s ease; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .input-group { position: relative; width: 100%; }
+        
+        .input-group i.left-icon {
+            position: absolute;
+            left: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #8A2BE2;
+            z-index: 2;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 1.1rem 1rem 1.1rem 3.5rem;
+            border: 2px solid #F8F8F8;
+            border-radius: 20px;
+            background: #FAFAFA;
+            font-family: 'Poppins';
+            font-size: 0.9rem;
+            font-weight: 600;
+            outline: none;
+            transition: .3s;
+            appearance: none;
+        }
+
+        input:focus, select:focus { border-color: #8A2BE2; background: white; }
+
+        /* Password Toggle and Strength */
+        .toggle-password {
+            position: absolute;
+            right: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #ccc;
+            z-index: 3;
+        }
+        
+        #password-strength {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-align: right;
+            margin-top: -0.8rem;
+        }
+        .str-weak { color: #ff4d4d; }
+        .str-medium { color: #ffa64d; }
+        .str-strong { color: #00cc66; }
+
+        .btn-auth {
+            margin-top: 0.5rem;
+            padding: 1.1rem;
+            background: #1a1a1a;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-auth.loading { opacity: 0.7; pointer-events: none; }
+    </style>
+</head>
+
+<body>
+
+    <header class="navbar">
+        <a class="logo" href="index.html">Pro<span>Signals</span></a>
+        <div class="menu-toggle"><i class="fas fa-bars"></i></div>
+    </header>
+
+    <main>
+        <div class="auth-card">
+            <div class="form-toggle">
+                <button class="toggle-btn active" data-form="signin-form">Sign In</button>
+                <button class="toggle-btn" data-form="signup-form">Join Now</button>
+            </div>
+
+            <form id="signin-form" class="form active">
+                <div class="input-group">
+                    <i class="fas fa-envelope left-icon"></i>
+                    <input type="email" id="login-email" placeholder="Email Address" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock left-icon"></i>
+                    <input type="password" id="login-password" placeholder="Password" required>
+                </div>
+                <button type="submit" class="btn-auth">Login to Account</button>
+            </form>
+
+            <form id="signup-form" class="form">
+                <div class="input-group">
+                    <i class="fas fa-user left-icon"></i>
+                    <input type="text" id="signup-name" placeholder="Full Name" required>
+                </div>
+                
+                <div class="input-group">
+                    <i class="fas fa-envelope left-icon"></i>
+                    <input type="email" id="signup-email" placeholder="Email Address" required>
+                </div>
+
+                <div class="input-group">
+                    <i class="fas fa-globe left-icon"></i>
+                    <select id="signup-country" required>
+                        <option value="" disabled>Select Country</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <i class="fas fa-venus-mars left-icon"></i>
+                    <select id="signup-gender" required>
+                        <option value="" disabled selected>Select Gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <i class="fas fa-lock left-icon"></i>
+                    <input type="password" id="signup-password" placeholder="Create Password" required>
+                    <i class="fas fa-eye toggle-password" id="togglePass"></i>
+                </div>
+
+                <div id="password-strength"></div>
+
+                <button type="submit" class="btn-auth">Create Account</button>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        const _supabase = supabase.createClient(
+            'https://iuuokazjfwlziilwwynr.supabase.co',
+            'sb_publishable_OVw_Wt2N7kMbX05WHpzRpg_fdLqjCFK'
+        );
+
+        // FORM TOGGLE
+        document.querySelectorAll('.toggle-btn').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.querySelectorAll('.form').forEach(f => f.classList.remove('active'));
+                document.getElementById(btn.dataset.form).classList.add('active');
+            };
+        });
+
+        // LOAD COUNTRIES (Default US)
+        async function loadCountries() {
+            try {
+                const res = await fetch('https://restcountries.com/v3.1/all?fields=name,cca2');
+                const data = await res.json();
+                const countrySelect = document.getElementById('signup-country');
+                data.sort((a, b) => a.name.common.localeCompare(b.name.common));
+
+                data.forEach(c => {
+                    let opt = document.createElement('option');
+                    opt.value = c.name.common;
+                    opt.innerText = c.name.common;
+                    if(c.cca2 === "US") opt.selected = true;
+                    countrySelect.appendChild(opt);
+                });
+            } catch (e) { console.error(e); }
+        }
+        loadCountries();
+
+        // PASSWORD TOGGLE
+        document.getElementById("togglePass").onclick = function() {
+            const pass = document.getElementById("signup-password");
+            if (pass.type === "password") {
+                pass.type = "text";
+                this.classList.replace("fa-eye", "fa-eye-slash");
+            } else {
+                pass.type = "password";
+                this.classList.replace("fa-eye-slash", "fa-eye");
+            }
+        };
+
+        // STRENGTH METER
+        document.getElementById("signup-password").addEventListener("input", function() {
+            const val = this.value;
+            const strength = document.getElementById("password-strength");
+            if(!val) { strength.innerHTML = ""; return; }
+            let level = "Weak", cls = "str-weak";
+            if(val.length > 8 && /[A-Z]/.test(val) && /\d/.test(val)) { level = "Strong"; cls = "str-strong"; }
+            else if(val.length >= 6) { level = "Medium"; cls = "str-medium"; }
+            strength.innerHTML = `Strength: <span class="${cls}">${level}</span>`;
+        });
+
+        // SIGNUP LOGIC
+        document.getElementById('signup-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+
+            btn.classList.add("loading");
+            btn.innerText = "Creating Account...";
+            
+            const { error } = await _supabase.auth.signUp({
+                email: document.getElementById('signup-email').value,
+                password: document.getElementById('signup-password').value,
+                options: {
+                    data: {
+                        full_name: document.getElementById('signup-name').value,
+                        gender: document.getElementById('signup-gender').value,
+                        country: document.getElementById('signup-country').value
+                    }
+                }
+            });
+
+            btn.classList.remove("loading");
+            if(error) { alert(error.message); btn.innerText = "Create Account"; }
+            else alert("Check your email for confirmation!");
+        };
+        
+        // LOGIN LOGIC
+        document.getElementById('signin-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const { error } = await _supabase.auth.signInWithPassword({
+                email: document.getElementById('login-email').value,
+                password: document.getElementById('login-password').value
+            });
+            if(error) alert(error.message);
+            else window.location.href = 'dashboard.html';
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ProSignals</title>
+    <link rel="stylesheet" href="main.css" />
+    <style>
+        .faq {
+            max-width: 800px;
+            margin: auto;
+        }
+        .faq-question {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border: none;
+            background-color: bisque;
+            cursor: pointer;
+            text-align: left;
+        }
+        .faq-answer {
+            display: none;
+            padding: 10px;
+            background: #fafafa;
+        }
+    </style>
+  </head>
+  <body>
+    <div class="navbar">
+      <div class="container">
+        <a class="logo" href="index.html">Pro<span>Signals</span></a>
+
+        <img
+          id="mobile-cta"
+          class="mobile-menu"
+          src="images/menu.svg"
+          alt="Open Navigation"
+        />
+
+        <nav>
+          <img
+            id="mobile-exit"
+            class="mobile-menu-exit"
+            src="images/exit.svg"
+            alt="Close Navigation"
+          />
+
+          <ul class="primary-nav">
+            <li class="current"><a href="index.html">Home</a></li>
+            <li><a href="faq.html">FAQs</a></li>
+            <li><a href="#">Pricing</a></li>
+          </ul>
+
+          <ul class="secondary-nav">
+            <li><a href="#">Contact</a></li>
+            <li class="go-premium-cta">
+              <a href="signup.html">Signup/Login</a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+
+    <section class="faq">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+            <button class="faq-question">How do I deposit cryptocurrency</button>
+            <div class="faq-answer">
+                <p> Go to the deposit page, select the cryptocurrency you want to send, and copy the wallet address </p>
+            </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question">
+            How long do withdrawals take?
+          </button>
+            <div class="faq-answer">
+              <p>
+                Withdrawals are processed once the transaction is confirmed on the blockchain network.
+              </p>
+            </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question">
+            Is trading risky?
+          </button>
+            <div class="faq-answer">
+              <p>
+                Yes. Trading involves risk and prices can change quikly.
+              </p>
+            </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question">
+            How do I trade?
+          </button>
+            <div class="faq-answer">
+              <p>
+                Withdrawals are processed once the transaction is confirmed on the blockchain network.
+              </p>
+            </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question">
+            How long do withdrawals take?
+          </button>
+            <div class="faq-answer">
+              <p>
+                Withdrawals are processed once the transaction is confirmed on the blockchain network.
+              </p>
+            </div>
+        </div>
+    </section>
+
+    <section class="contact-section">
+      <div class="container">
+        <div class="contact-left">
+          <h2>Contact</h2>
+
+          <form action="">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" />
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" />
+
+            <label for="message">Message</label>
+            <textarea
+              name="message"
+              id="message"
+              cols="30"
+              rows="10"
+            ></textarea>
+
+            <input
+              type="submit"
+              class="send-message-cta"
+              value="Send message"
+            />
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <script>
+        const questions = document.querySelectorAll(".faq-question");
+        questions.forEach(question => {question.addEventListener("click", () => {
+        const answer = question.nextElementSibling;
+        
+        if(answer.style.display==="block"){
+            answer.style.display = "none";
+        } else{
+            answer.style.display = "block";
+        }
+        });
+    });
+
+      const mobileBtn = document.getElementById("mobile-cta");
+      nav = document.querySelector("nav");
+      mobileBtnExit = document.getElementById("mobile-exit");
+
+      mobileBtn.addEventListener("click", () => {
+        nav.classList.add("menu-btn");
+      });
+
+      mobileBtnExit.addEventListener("click", () => {
+        nav.classList.remove("menu-btn");
+      });
+    </script>
+  </body>
+</html>
